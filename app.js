@@ -1,7 +1,6 @@
 (() => {
   "use strict";
 
-  // ---------- Helpers ----------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -45,6 +44,53 @@
 
   function isNeg(n) { return Number.isFinite(n) && n < 0; }
 
+  // ---------- localStorage ----------
+  const STORAGE_KEY = "barraDeOuro:v1";
+
+  function storageAvailable() {
+    try {
+      const x = "__t";
+      localStorage.setItem(x, "1");
+      localStorage.removeItem(x);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const hasStorage = storageAvailable();
+
+  function loadSaved() {
+    if (!hasStorage) return null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || data.v !== 1) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveState(partial) {
+    if (!hasStorage) return;
+    try {
+      const current = loadSaved() || { v: 1, form: {}, ui: {} };
+      const next = {
+        v: 1,
+        form: { ...(current.form || {}), ...(partial.form || {}) },
+        ui: { ...(current.ui || {}), ...(partial.ui || {}) },
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+  }
+
+  function clearSaved() {
+    if (!hasStorage) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  }
+
   // ---------- Focus trap ----------
   function focusableElements(container) {
     const sel = [
@@ -82,7 +128,7 @@
     return () => container.removeEventListener("keydown", onKeyDown);
   }
 
-  // ---------- UI: Menu ----------
+  // ---------- Menu ----------
   const btnMenu = $("#btnMenu");
   const menuOverlay = $("#menuOverlay");
   const menuPanel = $(".menu-panel");
@@ -102,7 +148,6 @@
     btnMenu.setAttribute("aria-expanded", "true");
 
     releaseMenuTrap = trapFocus(menuPanel, closeMenu);
-    menuPanel.focus({ preventScroll: true });
   }
 
   function closeMenu() {
@@ -164,22 +209,18 @@
     if (target.closest("[data-close-pdfhelp]")) closePdfHelp();
   });
 
-  // ✅ “Gerar PDF” agora abre ajuda e dispara o print
   btnPrint?.addEventListener("click", () => {
     closeMenu();
-    // Explica antes do print (fica mais claro)
     openPdfHelp();
-    setMsg("Dica: no Windows, escolha “Microsoft Print to PDF” e clique “Imprimir”. Depois selecione a pasta e salve.", "info");
+    setMsg("No celular: use “Compartilhar/Salvar”. No Windows: clique “Imprimir” e escolha pasta/nome.", "info");
 
-    // Deixa o modal renderizar e abre o print
     setTimeout(() => {
-      // Fechamos o modal pra não atrapalhar o diálogo do print
       closePdfHelp();
       window.print();
     }, 220);
   });
 
-  // ---------- Tutorial Modal (tabs simples) ----------
+  // ---------- Tutorial Modal ----------
   const tutorialModal = $("#tutorialModal");
   const modalPanel = $("#tutorialModal .modal-panel");
   let releaseModalTrap = null;
@@ -248,6 +289,7 @@
   // ---------- Inputs / Defaults ----------
   const form = $("#form");
   const btnReset = $("#btnReset");
+  const btnClearData = $("#btnClearData");
 
   const elValorInicial = $("#valorInicial");
   const elAporteMensal = $("#aporteMensal");
@@ -260,6 +302,9 @@
   const elTaxaAtivoReal = $("#taxaAtivoReal");
   const elTaxaRendaVar = $("#taxaRendaVar");
   const modeLabel = $("#modeLabel");
+
+  const miniReal = $("#miniReal");
+  const miniVar = $("#miniVar");
 
   const DEFAULTS = {
     valorInicial: "1000",
@@ -279,32 +324,74 @@
     if (modeLabel) modeLabel.textContent = on ? "Valores ajustados pela inflação" : "Valores nominais";
   }
 
-  function applyDefaults() {
-    if (elValorInicial) elValorInicial.value = DEFAULTS.valorInicial;
-    if (elAporteMensal) elAporteMensal.value = DEFAULTS.aporteMensal;
-    if (elPrazoMeses) elPrazoMeses.value = DEFAULTS.prazoMeses;
-    if (elTaxaPoupanca) elTaxaPoupanca.value = DEFAULTS.taxaPoupanca;
-    if (elTaxaAlternativo) elTaxaAlternativo.value = DEFAULTS.taxaAlternativo;
-    if (elToggleInflacao) elToggleInflacao.checked = DEFAULTS.inflacaoOn;
-    if (elInflacaoAnual) elInflacaoAnual.value = DEFAULTS.inflacaoAnual;
-    if (elTaxaAtivoReal) elTaxaAtivoReal.value = DEFAULTS.taxaAtivoReal;
-    if (elTaxaRendaVar) elTaxaRendaVar.value = DEFAULTS.taxaRendaVar;
-
+  function setFormValues(values) {
+    if (elValorInicial && values.valorInicial != null) elValorInicial.value = String(values.valorInicial);
+    if (elAporteMensal && values.aporteMensal != null) elAporteMensal.value = String(values.aporteMensal);
+    if (elPrazoMeses && values.prazoMeses != null) elPrazoMeses.value = String(values.prazoMeses);
+    if (elTaxaPoupanca && values.taxaPoupanca != null) elTaxaPoupanca.value = String(values.taxaPoupanca);
+    if (elTaxaAlternativo && values.taxaAlternativo != null) elTaxaAlternativo.value = String(values.taxaAlternativo);
+    if (elToggleInflacao && values.inflacaoOn != null) elToggleInflacao.checked = !!values.inflacaoOn;
+    if (elInflacaoAnual && values.inflacaoAnual != null) elInflacaoAnual.value = String(values.inflacaoAnual);
+    if (elTaxaAtivoReal && values.taxaAtivoReal != null) elTaxaAtivoReal.value = String(values.taxaAtivoReal);
+    if (elTaxaRendaVar && values.taxaRendaVar != null) elTaxaRendaVar.value = String(values.taxaRendaVar);
     updateInflacaoUI();
+  }
+
+  function applyDefaults() {
+    setFormValues(DEFAULTS);
     setMsg("");
   }
 
-  elToggleInflacao?.addEventListener("change", () => {
-    updateInflacaoUI();
-    if (state.hasData) computeAndRender();
-  });
+  function readFormRaw() {
+    return {
+      valorInicial: elValorInicial?.value ?? "",
+      aporteMensal: elAporteMensal?.value ?? "",
+      prazoMeses: elPrazoMeses?.value ?? "",
+      taxaPoupanca: elTaxaPoupanca?.value ?? "",
+      taxaAlternativo: elTaxaAlternativo?.value ?? "",
+      inflacaoOn: !!elToggleInflacao?.checked,
+      inflacaoAnual: elInflacaoAnual?.value ?? "",
+      taxaAtivoReal: elTaxaAtivoReal?.value ?? "",
+      taxaRendaVar: elTaxaRendaVar?.value ?? "",
+    };
+  }
+
+  const persistFormDebounced = debounce(() => {
+    saveState({ form: readFormRaw() });
+  }, 220);
+
+  function bindAutoSave() {
+    const inputs = [
+      elValorInicial, elAporteMensal, elPrazoMeses, elTaxaPoupanca, elTaxaAlternativo,
+      elInflacaoAnual, elTaxaAtivoReal, elTaxaRendaVar
+    ].filter(Boolean);
+
+    inputs.forEach((inp) => {
+      inp.addEventListener("input", persistFormDebounced);
+      inp.addEventListener("change", persistFormDebounced);
+    });
+
+    elToggleInflacao?.addEventListener("change", () => {
+      updateInflacaoUI();
+      persistFormDebounced();
+      if (state.hasData) computeAndRender();
+    });
+  }
 
   btnReset?.addEventListener("click", () => {
     applyDefaults();
+    saveState({ form: readFormRaw() });
     clearOutputs();
   });
 
-  // ---------- Models / Simulation ----------
+  btnClearData?.addEventListener("click", () => {
+    clearSaved();
+    applyDefaults();
+    clearOutputs();
+    setMsg("Dados limpos. Tudo voltou ao padrão.", "ok");
+  });
+
+  // ---------- Models ----------
   function annualToMonthlyRate(taxaAnualPercent) {
     const a = taxaAnualPercent / 100;
     return Math.pow(1 + a, 1 / 12) - 1;
@@ -385,19 +472,19 @@
       </div>
     `).join("");
 
-    const rect = anchorEl.getBoundingClientRect();
-    const sectionRect = $(".timeline")?.getBoundingClientRect();
-    if (!sectionRect) return;
-
     const preferNear = window.matchMedia("(min-width: 721px)").matches;
     if (preferNear) {
+      const rect = anchorEl.getBoundingClientRect();
+      const sectionRect = $(".timeline")?.getBoundingClientRect();
+      if (!sectionRect) return;
+
       const left = clamp(rect.left - sectionRect.left, 12, sectionRect.width - tip.offsetWidth - 12);
       const top = clamp(rect.bottom - sectionRect.top + 8, 70, sectionRect.height - tip.offsetHeight - 12);
       tip.style.left = `${left}px`;
       tip.style.top = `${top}px`;
       tip.style.right = "auto";
     } else {
-      tip.style.left = "auto";
+      tip.style.left = "";
       tip.style.right = "";
       tip.style.top = "";
     }
@@ -466,7 +553,7 @@
     `;
   }
 
-  // ---------- Canvas Charts ----------
+  // ---------- Canvas charts ----------
   const cPoup = $("#cPoup");
   const cSimples = $("#cSimples");
   const cComposto = $("#cComposto");
@@ -487,7 +574,7 @@
     const ctx = canvas.getContext("2d");
     const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
     const cssWidth = canvas.clientWidth || 600;
-    const cssHeight = Math.max(220, Math.round(cssWidth * 0.52));
+    const cssHeight = Math.max(240, Math.round(cssWidth * 0.58));
     canvas.style.height = `${cssHeight}px`;
 
     const w = Math.floor(cssWidth * dpr);
@@ -618,18 +705,23 @@
     drawLegend(ctx, Object.values(seriesMap).map((o) => ({ label: o.label, color: o.color })));
   }
 
-  // ---------- Compare default ----------
+  // ---------- Compare default + persist ----------
   const compareDetails = $("#compareDetails");
   const mqDesktop = window.matchMedia("(min-width: 860px)");
   let userToggledCompare = false;
 
   compareDetails?.addEventListener("toggle", () => {
     userToggledCompare = true;
+    saveState({ ui: { compareOpen: !!compareDetails.open } });
     if (state.hasData) redrawCharts();
   });
 
-  function syncCompareDefault() {
+  function syncCompareDefault(saved) {
     if (!compareDetails) return;
+    if (saved?.ui?.compareOpen != null) {
+      compareDetails.open = !!saved.ui.compareOpen;
+      return;
+    }
     if (userToggledCompare) return;
     compareDetails.open = mqDesktop.matches;
   }
@@ -648,8 +740,8 @@
     state.hasData = false;
     timelineList && (timelineList.innerHTML = "");
     cardsGrid && (cardsGrid.innerHTML = "");
-    $("#miniReal") && ($("#miniReal").textContent = "—");
-    $("#miniVar") && ($("#miniVar").textContent = "—");
+    miniReal && (miniReal.textContent = "—");
+    miniVar && (miniVar.textContent = "—");
     closeTip();
 
     [cPoup, cSimples, cComposto, cCompare].forEach((c) => {
@@ -727,8 +819,8 @@
       cardHTML("Diferença: composto vs poupança", formatBrl(diffCP)),
     ].join("");
 
-    $("#miniReal") && ($("#miniReal").textContent = formatBrl(finalR));
-    $("#miniVar") && ($("#miniVar").textContent = formatBrl(finalV));
+    miniReal && (miniReal.textContent = formatBrl(finalR));
+    miniVar && (miniVar.textContent = formatBrl(finalV));
   }
 
   function computeAndRender() {
@@ -773,8 +865,9 @@
 
     renderTimeline(i.prazoMeses);
     renderCards();
-    syncCompareDefault();
     redrawCharts();
+
+    saveState({ form: readFormRaw() });
 
     setMsg("Pronto. Toque na timeline para ver detalhes.", "ok");
   }
@@ -784,11 +877,14 @@
   function redrawCharts() {
     if (!state.hasData) return;
 
-    drawSingleChart(cPoup, state.display.poup, COLORS.poup);
-    drawSingleChart(cSimples, state.display.simple, COLORS.simple);
-    drawSingleChart(cComposto, state.display.comp, COLORS.comp);
+    drawSingleChart($("#cPoup"), state.display.poup, COLORS.poup);
+    drawSingleChart($("#cSimples"), state.display.simple, COLORS.simple);
+    drawSingleChart($("#cComposto"), state.display.comp, COLORS.comp);
 
-    if (compareDetails && compareDetails.open) {
+    const cmp = $("#compareDetails");
+    const cCompare = $("#cCompare");
+
+    if (cmp && cmp.open) {
       drawCompareChart(cCompare, {
         poup: { label: "Poupança", color: COLORS.poup, series: state.display.poup },
         simple: { label: "Simples", color: COLORS.simple, series: state.display.simple },
@@ -803,9 +899,8 @@
   }
 
   window.addEventListener("resize", debounce(() => {
-    syncCompareDefault();
     redrawCharts();
-  }, 200));
+  }, 220));
 
   // ---------- Init ----------
   function init() {
@@ -815,9 +910,17 @@
     document.body.classList.remove("is-locked");
     btnMenu?.setAttribute("aria-expanded", "false");
 
-    applyDefaults();
+    const saved = loadSaved();
+    if (saved?.form) {
+      setFormValues({ ...DEFAULTS, ...saved.form });
+      setMsg("Dados restaurados automaticamente.", "ok");
+    } else {
+      applyDefaults();
+    }
+
+    syncCompareDefault(saved);
+    bindAutoSave();
     clearOutputs();
-    syncCompareDefault();
   }
 
   init();

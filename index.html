@@ -6,7 +6,6 @@
   <meta name="color-scheme" content="dark" />
   <title>Barra de Ouro</title>
 
-  <!-- ÚNICA dependência externa permitida: Font Awesome -->
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
   <link
     rel="stylesheet"
@@ -22,7 +21,6 @@
 <body>
   <a class="skip-link" href="#main">Pular para o conteúdo</a>
 
-  <!-- Header (fixo) -->
   <header class="site-header">
     <div class="header-inner">
       <div class="brand" aria-label="Barra de Ouro">
@@ -40,7 +38,7 @@
   <div id="menuOverlay" class="overlay" hidden>
     <div class="overlay-backdrop" data-close-overlay aria-hidden="true"></div>
 
-    <nav class="menu-panel" aria-label="Menu" tabindex="-1">
+    <nav class="menu-panel scroll-clean" aria-label="Menu" tabindex="-1">
       <div class="menu-head">
         <div class="menu-title">
           <i class="fa-solid fa-coins" aria-hidden="true"></i>
@@ -70,9 +68,7 @@
     </nav>
   </div>
 
-  <!-- Main -->
   <main id="main" class="site-main">
-    <!-- Painel -->
     <section class="panel" aria-label="Painel de entradas">
       <div class="panel-head">
         <div>
@@ -146,6 +142,9 @@
         <div class="actions">
           <button id="btnCalc" class="btn btn-primary pulse" type="submit">Calcular</button>
           <button id="btnReset" class="btn btn-secondary" type="button">Reset</button>
+          <button id="btnClearData" class="btn btn-ghost" type="button" aria-label="Limpar dados salvos">
+            Limpar dados
+          </button>
 
           <div class="status">
             <span id="msg" class="msg" hidden></span>
@@ -154,18 +153,18 @@
       </form>
     </section>
 
-    <!-- Timeline -->
     <section class="timeline" aria-label="Linha do tempo interativa">
       <div class="section-head">
         <h2>Linha do tempo</h2>
         <p class="section-sub">Toque em um mês para ver os valores.</p>
       </div>
 
-      <div class="timeline-wrap" aria-label="Marcadores da timeline">
+      <!-- Agora sem container com rolagem interna no mobile -->
+      <div class="timeline-wrap scroll-clean" aria-label="Marcadores da timeline">
         <ol id="timelineList" class="timeline-list"></ol>
       </div>
 
-      <div id="tip" class="tooltip" hidden>
+      <div id="tip" class="tooltip scroll-clean" hidden>
         <div class="tooltip-head">
           <strong id="tipTitle">Mês</strong>
           <button id="tipClose" class="icon-btn" type="button" aria-label="Fechar detalhes do mês">
@@ -176,7 +175,6 @@
       </div>
     </section>
 
-    <!-- Cards -->
     <section class="cards" aria-label="Cartões resumo">
       <div class="section-head">
         <h2>Resumo</h2>
@@ -185,7 +183,6 @@
       <div id="cardsGrid" class="cards-grid"></div>
     </section>
 
-    <!-- Charts -->
     <section class="charts" aria-label="Gráficos em Canvas">
       <div class="section-head">
         <h2>Gráficos</h2>
@@ -224,7 +221,6 @@
       </details>
     </section>
 
-    <!-- Outras simulações -->
     <section class="extras" aria-label="Outras simulações">
       <div class="section-head">
         <h2>Outras simulações (ativos reais e renda variável)</h2>
@@ -255,7 +251,7 @@
   <div id="tutorialModal" class="modal" hidden>
     <div class="modal-backdrop" data-close-modal tabindex="-1" aria-hidden="true"></div>
 
-    <section class="modal-panel modal-wide" role="dialog" aria-modal="true" aria-label="Tutorial" tabindex="-1">
+    <section class="modal-panel modal-wide scroll-clean" role="dialog" aria-modal="true" aria-label="Tutorial" tabindex="-1">
       <header class="modal-head">
         <div class="modal-title">
           <h2>Tutorial</h2>
@@ -281,9 +277,9 @@
             <li><strong>1) Preencha as entradas</strong><span>Valor inicial, aporte, prazo e taxas anuais.</span></li>
             <li><strong>2) Nominais ou ajustados</strong><span>Nominal é número bruto. Ajustado é poder de compra.</span></li>
             <li><strong>3) Calcular</strong><span>Simula mês a mês pelas fórmulas do app.</span></li>
-            <li><strong>4) Timeline</strong><span>Toque em um mês para ver valores (tooltip).</span></li>
+            <li><strong>4) Timeline</strong><span>Toque em um mês para ver valores (detalhe).</span></li>
             <li><strong>5) Cards e gráficos</strong><span>Cards: final/aportes/juros. Gráficos: caminho.</span></li>
-            <li><strong>6) PDF</strong><span>Menu → Gerar PDF → clique “Imprimir” e salve.</span></li>
+            <li><strong>6) PDF</strong><span>“Salvar PDF” depende do navegador. Use “Compartilhar” no celular.</span></li>
           </ol>
 
           <div class="formula">
@@ -361,15 +357,15 @@
     </section>
   </div>
 
-  <!-- ✅ Novo modal: Ajuda para salvar PDF -->
+  <!-- Ajuda PDF -->
   <div id="pdfHelpModal" class="modal" hidden>
     <div class="modal-backdrop" data-close-pdfhelp tabindex="-1" aria-hidden="true"></div>
 
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-label="Como salvar em PDF" tabindex="-1">
+    <section class="modal-panel scroll-clean" role="dialog" aria-modal="true" aria-label="Como salvar em PDF" tabindex="-1">
       <header class="modal-head">
         <div class="modal-title">
           <h2>Salvar em PDF</h2>
-          <p class="section-sub">O navegador não “salva sozinho”. Ele abre a impressão e você confirma o arquivo.</p>
+          <p class="section-sub">“Salvar PDF” muda conforme navegador. A regra é: imprimir e escolher destino.</p>
         </div>
 
         <button class="icon-btn" type="button" aria-label="Fechar ajuda do PDF" data-close-pdfhelp>
@@ -378,19 +374,20 @@
       </header>
 
       <div class="formula">
-        <h3>No Windows (seu print)</h3>
+        <h3>No celular</h3>
         <ul class="clean-list">
-          <li>Em <strong>Impressora</strong>, selecione <strong>Microsoft Print to PDF</strong>.</li>
-          <li>Clique <strong>Imprimir</strong>.</li>
-          <li>Na janela do Windows, escolha <strong>pasta</strong> e <strong>nome</strong> do arquivo e confirme.</li>
+          <li>Procure por <strong>Compartilhar</strong> ou <strong>Salvar</strong>.</li>
+          <li>No Android: muitas vezes “Salvar como PDF”.</li>
+          <li>No iPhone: “Compartilhar” → “Salvar em Arquivos”.</li>
         </ul>
       </div>
 
       <div class="formula">
-        <h3>Se aparecer “Salvar como PDF”</h3>
+        <h3>No Windows</h3>
         <ul class="clean-list">
-          <li>No destino, escolha <strong>Salvar como PDF</strong>.</li>
-          <li>Clique <strong>Salvar</strong>.</li>
+          <li>Escolha <strong>Microsoft Print to PDF</strong>.</li>
+          <li>Clique <strong>Imprimir</strong>.</li>
+          <li>Depois selecione pasta/nome e salve.</li>
         </ul>
       </div>
 
