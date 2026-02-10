@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Barra de Ouro</title>
+
+  <!-- ÚNICA dependência externa permitida: Font Awesome -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="app.js"></script>
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Pular para o conteúdo</a>
+
+  <!-- Header (fixo) -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand" aria-label="Barra de Ouro">
+        <i class="fa-solid fa-coins" aria-hidden="true"></i>
+        <span class="brand-text">Barra de Ouro</span>
+      </div>
+
+      <button id="btnMenu" class="icon-btn" type="button" aria-label="Abrir menu" aria-expanded="false">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Menu overlay -->
+  <div id="menuOverlay" class="overlay" hidden>
+    <div class="overlay-backdrop" data-close-overlay aria-hidden="true"></div>
+
+    <nav class="menu-panel" aria-label="Menu" tabindex="-1">
+      <div class="menu-head">
+        <div class="menu-title">
+          <i class="fa-solid fa-coins" aria-hidden="true"></i>
+          <span>Menu</span>
+        </div>
+
+        <button id="btnCloseMenu" class="icon-btn" type="button" aria-label="Fechar menu">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="menu-actions">
+        <button id="btnPrint" class="menu-item" type="button">
+          <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+          <span>Gerar PDF</span>
+        </button>
+
+        <button id="btnTutorial" class="menu-item" type="button">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          <span>Tutorial</span>
+        </button>
+      </div>
+
+      <p class="menu-hint">
+        Dica: no Windows, selecione <strong>Microsoft Print to PDF</strong> e clique <strong>Imprimir</strong>.
+      </p>
+    </nav>
+  </div>
+
+  <!-- Main -->
+  <main id="main" class="site-main">
+    <!-- Painel -->
+    <section class="panel" aria-label="Painel de entradas">
+      <div class="panel-head">
+        <div>
+          <h1>Simulador minimalista</h1>
+          <p class="panel-sub sr-only">Simule aportes e compare modelos de juros e simulações.</p>
+        </div>
+
+        <span class="pill" id="modeLabel">Valores nominais</span>
+      </div>
+
+      <form id="form" class="form" autocomplete="off" novalidate>
+        <div class="grid">
+          <div class="field">
+            <label for="valorInicial">Valor inicial (R$)</label>
+            <input id="valorInicial" inputmode="decimal" type="text" />
+            <small class="help">Ex.: 1000</small>
+          </div>
+
+          <div class="field">
+            <label for="aporteMensal">Aporte mensal (R$)</label>
+            <input id="aporteMensal" inputmode="decimal" type="text" />
+            <small class="help">Ex.: 200</small>
+          </div>
+
+          <div class="field">
+            <label for="prazoMeses">Prazo (meses)</label>
+            <input id="prazoMeses" inputmode="numeric" type="number" min="1" max="600" />
+            <small class="help">1 a 600</small>
+          </div>
+
+          <div class="field">
+            <label for="taxaPoupanca">Taxa anual Poupança (aprox.) %</label>
+            <input id="taxaPoupanca" inputmode="decimal" type="text" />
+            <small class="help">Ex.: 6.0</small>
+          </div>
+
+          <div class="field">
+            <label for="taxaAlternativo">Taxa anual Alternativo (Tesouro/CDI aprox.) %</label>
+            <input id="taxaAlternativo" inputmode="decimal" type="text" />
+            <small class="help">Ex.: 10.0</small>
+          </div>
+
+          <div class="field field-toggle">
+            <label class="toggle">
+              <input id="toggleInflacao" type="checkbox" />
+              <span class="toggle-ui" aria-hidden="true"></span>
+              <span class="toggle-text">Mostrar valores ajustados pela inflação</span>
+            </label>
+            <small class="help">Se ligado, mostra poder de compra estimado.</small>
+          </div>
+
+          <div id="inflacaoWrap" class="field is-hidden">
+            <label for="inflacaoAnual">Inflação anual %</label>
+            <input id="inflacaoAnual" inputmode="decimal" type="text" />
+            <small class="help">Ex.: 4.0</small>
+          </div>
+
+          <div class="field">
+            <label for="taxaAtivoReal">Taxa anual “Ativo real (simulação)” %</label>
+            <input id="taxaAtivoReal" inputmode="decimal" type="text" />
+            <small class="help">Ex.: 8.0</small>
+          </div>
+
+          <div class="field">
+            <label for="taxaRendaVar">Taxa anual “Renda variável (simulação)” %</label>
+            <input id="taxaRendaVar" inputmode="decimal" type="text" />
+            <small class="help">Ex.: 12.0</small>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="btnCalc" class="btn btn-primary pulse" type="submit">Calcular</button>
+          <button id="btnReset" class="btn btn-secondary" type="button">Reset</button>
+
+          <div class="status">
+            <span id="msg" class="msg" hidden></span>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Timeline -->
+    <section class="timeline" aria-label="Linha do tempo interativa">
+      <div class="section-head">
+        <h2>Linha do tempo</h2>
+        <p class="section-sub">Toque em um mês para ver os valores.</p>
+      </div>
+
+      <div class="timeline-wrap" aria-label="Marcadores da timeline">
+        <ol id="timelineList" class="timeline-list"></ol>
+      </div>
+
+      <div id="tip" class="tooltip" hidden>
+        <div class="tooltip-head">
+          <strong id="tipTitle">Mês</strong>
+          <button id="tipClose" class="icon-btn" type="button" aria-label="Fechar detalhes do mês">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div id="tipBody" class="tooltip-body"></div>
+      </div>
+    </section>
+
+    <!-- Cards -->
+    <section class="cards" aria-label="Cartões resumo">
+      <div class="section-head">
+        <h2>Resumo</h2>
+        <p class="section-sub">Caixas suspensas com alto contraste.</p>
+      </div>
+      <div id="cardsGrid" class="cards-grid"></div>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts" aria-label="Gráficos em Canvas">
+      <div class="section-head">
+        <h2>Gráficos</h2>
+        <p class="section-sub">Eixos simples, grades discretas, responsivo.</p>
+      </div>
+
+      <div class="charts-grid">
+        <article class="chart-card">
+          <h3>Poupança</h3>
+          <canvas id="cPoup" class="chart" aria-label="Gráfico linha Poupança"></canvas>
+        </article>
+
+        <article class="chart-card">
+          <h3>Juros simples</h3>
+          <canvas id="cSimples" class="chart" aria-label="Gráfico linha Juros simples"></canvas>
+        </article>
+
+        <article class="chart-card">
+          <h3>Juros compostos</h3>
+          <canvas id="cComposto" class="chart" aria-label="Gráfico linha Juros compostos"></canvas>
+        </article>
+      </div>
+
+      <details id="compareDetails" class="compare">
+        <summary class="compare-summary">
+          <span><strong>Comparativo</strong> (inclui simulações)</span>
+          <span class="compare-hint">abrir/fechar</span>
+        </summary>
+
+        <article class="chart-card compare-card">
+          <canvas id="cCompare" class="chart" aria-label="Gráfico comparativo de todos os modelos"></canvas>
+          <p class="legend-note">
+            Linhas “Ativo real” e “Renda variável” são <strong>simulações</strong>.
+          </p>
+        </article>
+      </details>
+    </section>
+
+    <!-- Outras simulações -->
+    <section class="extras" aria-label="Outras simulações">
+      <div class="section-head">
+        <h2>Outras simulações (ativos reais e renda variável)</h2>
+        <p class="section-sub">Dois modelos extras + aviso fixo.</p>
+      </div>
+
+      <p class="warn">Simulações educacionais, não recomendação financeira.</p>
+
+      <div class="extras-mini" aria-label="Resumo das simulações">
+        <article class="mini">
+          <h3>Ativo real (simulação) final</h3>
+          <p id="miniReal" class="mini-value">—</p>
+        </article>
+
+        <article class="mini">
+          <h3>Renda variável (simulação) final</h3>
+          <p id="miniVar" class="mini-value">—</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    Copyright @ 2026 - Ailton A. Nakata
+  </footer>
+
+  <!-- Tutorial -->
+  <div id="tutorialModal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-modal tabindex="-1" aria-hidden="true"></div>
+
+    <section class="modal-panel modal-wide" role="dialog" aria-modal="true" aria-label="Tutorial" tabindex="-1">
+      <header class="modal-head">
+        <div class="modal-title">
+          <h2>Tutorial</h2>
+          <p class="section-sub">Curto para começar. Profundo para entender. Sem enrolação.</p>
+        </div>
+
+        <button class="icon-btn" type="button" aria-label="Fechar tutorial" data-close-modal>
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Abas do tutorial">
+        <button id="tComo" class="tab is-active" type="button" role="tab" aria-selected="true" aria-controls="pComo">Como usar</button>
+        <button id="tConceitos" class="tab" type="button" role="tab" aria-selected="false" aria-controls="pConceitos">Conceitos</button>
+        <button id="tInflacao" class="tab" type="button" role="tab" aria-selected="false" aria-controls="pInflacao">Inflação</button>
+        <button id="tPesquisa" class="tab" type="button" role="tab" aria-selected="false" aria-controls="pPesquisa">Onde pesquisar</button>
+        <button id="tRiscos" class="tab" type="button" role="tab" aria-selected="false" aria-controls="pRiscos">Riscos e regras</button>
+      </div>
+
+      <div class="tabpanels">
+        <section id="pComo" class="tabpanel" role="tabpanel" aria-labelledby="tComo">
+          <ol class="steps">
+            <li><strong>1) Preencha as entradas</strong><span>Valor inicial, aporte, prazo e taxas anuais.</span></li>
+            <li><strong>2) Nominais ou ajustados</strong><span>Nominal é número bruto. Ajustado é poder de compra.</span></li>
+            <li><strong>3) Calcular</strong><span>Simula mês a mês pelas fórmulas do app.</span></li>
+            <li><strong>4) Timeline</strong><span>Toque em um mês para ver valores (tooltip).</span></li>
+            <li><strong>5) Cards e gráficos</strong><span>Cards: final/aportes/juros. Gráficos: caminho.</span></li>
+            <li><strong>6) PDF</strong><span>Menu → Gerar PDF → clique “Imprimir” e salve.</span></li>
+          </ol>
+
+          <div class="formula">
+            <h3>Resumo em 6 linhas (obrigatório)</h3>
+            <ul class="clean-list">
+              <li>diferença entre juros simples e composto</li>
+              <li>por que passivos drenam caixa</li>
+              <li>conceito de aportes</li>
+              <li>foco em constância</li>
+              <li>metas pequenas para quem não gosta de ler</li>
+              <li>aviso: não é recomendação financeira</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="pConceitos" class="tabpanel" role="tabpanel" aria-labelledby="tConceitos" hidden>
+          <div class="mini-grid">
+            <div class="mini-card">
+              <h3>Juros simples</h3>
+              <p>No app: soma aporte + adiciona <strong>totalAportado × taxaMensal</strong> todo mês.</p>
+            </div>
+            <div class="mini-card">
+              <h3>Juros compostos</h3>
+              <p>No app: <strong>(saldo + aporte) × (1 + taxaMensal)</strong>. A aceleração cresce com o tempo.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="pInflacao" class="tabpanel" role="tabpanel" aria-labelledby="tInflacao" hidden>
+          <div class="formula">
+            <h3>Como o app ajusta pela inflação</h3>
+            <p style="margin:0;color:var(--muted);">
+              <code>fatorMensal = (1 + inflacaoAnual)^(1/12) - 1</code><br />
+              <code>saldoReal = saldoNominal / (1 + fatorMensal)^mes</code>
+            </p>
+          </div>
+        </section>
+
+        <section id="pPesquisa" class="tabpanel" role="tabpanel" aria-labelledby="tPesquisa" hidden>
+          <div class="mini-grid">
+            <div class="mini-card">
+              <h3>Onde pesquisar</h3>
+              <ul class="clean-list">
+                <li>Banco Central (BCB)</li>
+                <li>IBGE</li>
+                <li>Tesouro Direto (oficial)</li>
+              </ul>
+            </div>
+            <div class="mini-card">
+              <h3>Filtro anti-pegadinha</h3>
+              <ul class="clean-list">
+                <li>Retorno alto “garantido” = alerta</li>
+                <li>Compare custos e risco</li>
+                <li>Procure dados, não prints</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="pRiscos" class="tabpanel" role="tabpanel" aria-labelledby="tRiscos" hidden>
+          <div class="formula">
+            <h3>O que o simulador NÃO faz</h3>
+            <ul class="clean-list">
+              <li>Não inclui impostos/IOF/taxas.</li>
+              <li>Renda variável aqui é taxa constante (educacional).</li>
+              <li>Não substitui planejamento financeiro.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" type="button" data-close-modal>Fechar</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ✅ Novo modal: Ajuda para salvar PDF -->
+  <div id="pdfHelpModal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-pdfhelp tabindex="-1" aria-hidden="true"></div>
+
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-label="Como salvar em PDF" tabindex="-1">
+      <header class="modal-head">
+        <div class="modal-title">
+          <h2>Salvar em PDF</h2>
+          <p class="section-sub">O navegador não “salva sozinho”. Ele abre a impressão e você confirma o arquivo.</p>
+        </div>
+
+        <button class="icon-btn" type="button" aria-label="Fechar ajuda do PDF" data-close-pdfhelp>
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="formula">
+        <h3>No Windows (seu print)</h3>
+        <ul class="clean-list">
+          <li>Em <strong>Impressora</strong>, selecione <strong>Microsoft Print to PDF</strong>.</li>
+          <li>Clique <strong>Imprimir</strong>.</li>
+          <li>Na janela do Windows, escolha <strong>pasta</strong> e <strong>nome</strong> do arquivo e confirme.</li>
+        </ul>
+      </div>
+
+      <div class="formula">
+        <h3>Se aparecer “Salvar como PDF”</h3>
+        <ul class="clean-list">
+          <li>No destino, escolha <strong>Salvar como PDF</strong>.</li>
+          <li>Clique <strong>Salvar</strong>.</li>
+        </ul>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" type="button" data-close-pdfhelp>Entendi</button>
+      </div>
+    </section>
+  </div>
+
+  <noscript>
+    <div class="noscript">Ative o JavaScript para usar o simulador.</div>
+  </noscript>
+</body>
+</html>
